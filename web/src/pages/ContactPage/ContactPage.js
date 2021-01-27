@@ -1,12 +1,13 @@
 import {
   Form,
-  Label,
   TextField,
   TextAreaField,
-  FieldError,
   Submit,
+  FieldError,
+  Label,
+  FormError,
 } from '@redwoodjs/forms'
-import { useMutation } from '@redwoodjs/web'
+import { Flash, useFlash, useMutation } from '@redwoodjs/web'
 import { useForm } from 'react-hook-form'
 import BlogLayout from 'src/layouts/BlogLayout'
 
@@ -20,10 +21,14 @@ const CREATE_CONTACT = gql`
 
 const ContactPage = () => {
   const formMethods = useForm()
-  const [create, { loading }] = useMutation(CREATE_CONTACT, {
+  const { addMessage } = useFlash()
+
+  const [create, { loading, error }] = useMutation(CREATE_CONTACT, {
     onCompleted: () => {
+      addMessage('Thank you for your submission!', {
+        style: { backgroundColor: 'green', color: 'white', padding: '1rem' }
+      })
       formMethods.reset()
-      alert('Thank you for your message!')
     },
   })
 
@@ -34,34 +39,46 @@ const ContactPage = () => {
 
   return (
     <BlogLayout>
+      <Flash timeout={1000} />
       <Form
         onSubmit={onSubmit}
         validation={{ mode: 'onBlur' }}
+        error={error}
         formMethods={formMethods}
       >
-        <FieldError className="error" name="name" />
-        <Label name="name">Your Name</Label>
+        <FormError
+          error={error}
+          wrapperStyle={{ color: 'red', backgroundColor: 'lavenderblush' }}
+        />
+        <Label name="name" errorClassName="error">
+          Name
+        </Label>
         <TextField
           name="name"
-          errorClassName="error"
           validation={{ required: true }}
-        />
-
-        <FieldError className="error" name="email" />
-        <Label name="email">Your email</Label>
-        <TextAreaField
-          name="email"
           errorClassName="error"
-          validation={{ required: true, pattern: { value: /[^@]+@[^.]+\..+/ } }}
         />
+        <FieldError name="name" className="error" />
 
-        <FieldError className="error" name="message" />
-        <Label name="message">Your message</Label>
+        <Label name="email" errorClassName="error">
+          Email
+        </Label>
         <TextField
-          name="message"
+          name="email"
+          validation={{ required: true, pattern: { value: /[^@]+@[^.]+\..+/ } }}
           errorClassName="error"
-          validation={{ required: true }}
         />
+        <FieldError name="email" className="error" />
+
+        <Label name="message" errorClassName="error">
+          Message
+        </Label>
+        <TextAreaField
+          name="message"
+          validation={{ required: true }}
+          errorClassName="error"
+        />
+        <FieldError name="message" className="error" />
 
         <Submit disabled={loading}>Save</Submit>
       </Form>
